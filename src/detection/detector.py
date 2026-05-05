@@ -51,6 +51,20 @@ def detect_objects(model: YOLO, frame: np.ndarray, confidence: float = 0.3) -> l
     return detections
 
 
+def is_play_frame(detections: list[Detection], min_persons: int = 3) -> bool:
+    person_count = sum(1 for d in detections if d.class_name == "person")
+    return person_count >= min_persons
+
+
+def filter_pitch_zone(detections: list[Detection], frame_height: int, pitch_start: float = 0.3) -> list[Detection]:
+    """
+    Discard detections whose center falls above the pitch zone.
+    pitch_start: fraction of frame height where the pitch begins (default top 30% is crowd/stands).
+    """
+    cutoff_y = int(frame_height * pitch_start)
+    return [d for d in detections if d.center[1] >= cutoff_y]
+
+
 def draw_detections(frame: np.ndarray, detections: list[Detection]) -> np.ndarray:
     annotated = frame.copy()
 
@@ -92,8 +106,14 @@ if __name__ == "__main__":
         frame = cv2.imread(frame_path)
 
         detections = detect_objects(model, frame)
-        annotated = draw_detections(frame, detections)
 
+        if not is_play_frame(detections):
+            print(f"{filename} → SKIPPED (non-play frame)")
+            continue
+
+        detections = filter_pitch_zone(detections, frame.shape[0])
+
+        annotated = draw_detections(frame, detections)
         output_path = os.path.join(OUTPUT_DIR, filename)
         cv2.imwrite(output_path, annotated)
 
