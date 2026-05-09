@@ -69,7 +69,7 @@ def extract_frames(video_path: str, output_dir: str, sample_rate: int = 5) -> li
 
 
 if __name__ == "__main__":
-    VIDEO = "data/raw/haaland_goals.mp4"
+    VIDEO = "data/raw/haaland_goals_hd.mp4"
     OUTPUT = "outputs/frames"
 
     meta = get_video_meta(VIDEO)
